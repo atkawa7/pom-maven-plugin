@@ -4,76 +4,38 @@ import org.apache.maven.model.Dependency;
 import org.apache.maven.model.DependencyManagement;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugins.annotations.LifecyclePhase;
+import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 import org.w3c.dom.Element;
 
 import java.util.List;
 
+@Mojo( name = "refactor", defaultPhase = LifecyclePhase.CLEAN)
 public class PomRefactorMojo extends AbstractPomModifyMojo {
 
-    /**
-     * The new groupId to apply.
-     *
-     * @parameter expression="${newGroupId}"
-     * @since 1.0.0
-     */
+    @Parameter(defaultValue = "${newGroupId}")
     private String newGroupId;
 
-    /**
-     * The new artifactId to apply.
-     *
-     * @parameter expression="${newArtifactId}"
-     * @since 1.0.0
-     */
+    @Parameter(defaultValue = "${newArtifactId}")
     private String newArtifactId;
 
-    /**
-     * The new version to apply.
-     *
-     * @parameter expression="${newVersion}"
-     * @since 1.0.0
-     */
+    @Parameter(defaultValue = "${newVersion}")
     private String newVersion;
 
-    /**
-     * The new type to apply.
-     *
-     * @parameter expression="${newType}"
-     * @since 1.0.0
-     */
+    @Parameter(defaultValue = "${newType}")
     private String newType;
 
-    /**
-     * The new scope to apply.
-     *
-     * @parameter expression="${newScope}"
-     * @since 1.0.0
-     */
+
+    @Parameter(defaultValue = "${newScope}")
     private String newScope;
 
-    /**
-     * The new classifier to apply.
-     *
-     * @parameter expression="${newClassifier}"
-     * @since 1.0.0
-     */
+    @Parameter(defaultValue = "${newClassifier}")
     private String newClassifier;
 
-    /**
-     * The flag to indicate if properties should be resolved for matching. If a
-     * <code>pom.xml</code> contains
-     * <code>&lt;version&gt;${foo.version}&lt;/version&gt;</code> and
-     * <code>resolveVariables</code> is <code>true</code>, then the property
-     * <code>foo.version</code> is resolved and in case of a replacement, the
-     * property-value is replaced where declared while the reference remains
-     * untouched. Otherwise, the property is treated literally in order to be able
-     * to replace the property reference (<code>${foo.version}</code>) with a new
-     * value.
-     *
-     * @parameter expression="${resolveVariables}" default-value="true"
-     * @required
-     * @since 1.0.0
-     */
+
+    @Parameter(defaultValue = "${resolveVariables}")
     private boolean resolveVariables;
 
     // ----------------------------------------------------------------------
@@ -101,7 +63,7 @@ public class PomRefactorMojo extends AbstractPomModifyMojo {
                 DependencyInfo delta = getNewAttributes().getDiff(dependency);
                 if (!delta.isEmpty()) {
                     getLog().info(
-                            "Chaning dependency " + new DependencyInfo(dependency) + " to "
+                            "Changing dependency " + new DependencyInfo(dependency) + " to "
                                     + delta.toDiffString());
                     // try to find dependency in XML
                     List<Element> dependencyElementList;
@@ -225,23 +187,42 @@ public class PomRefactorMojo extends AbstractPomModifyMojo {
     public void execute(ProjectContainer projectContainer) throws MojoExecutionException,
             MojoFailureException {
 
+
         if (getNewAttributes().isEmpty()) {
+            getLog().debug("New Parameters are --->"+ toString());
             throw new MojoExecutionException(
                     "At least one of the new*-parameters (newVersion, newArtifactId, newGroupId, newScope or newClassifier) have to be configured!");
         }
-        super.execute(projectContainer);
-        MavenProject project = projectContainer.getProject();
-        updateProject(projectContainer, project, false);
-        MavenProject parent = project.getParent();
-        if (parent != null) {
-            updateProject(projectContainer, parent, true);
+        if(projectContainer!=null){
+            super.execute(projectContainer);
+            MavenProject project = projectContainer.getProject();
+            updateProject(projectContainer, project, false);
+            MavenProject parent = project.getParent();
+            if (parent != null) {
+                updateProject(projectContainer, parent, true);
+            }
+            updateDependencies(project.getDependencies(), projectContainer,
+                    ProjectContainer.XML_TAG_DEPENDENCIES);
+            DependencyManagement dependencyManagement = project.getDependencyManagement();
+            if (dependencyManagement != null) {
+                updateDependencies(dependencyManagement.getDependencies(), projectContainer,
+                        ProjectContainer.XML_TAG_DEPENDENCY_MANAGEMENT);
+            }
         }
-        updateDependencies(project.getDependencies(), projectContainer,
-                ProjectContainer.XML_TAG_DEPENDENCIES);
-        DependencyManagement dependencyManagement = project.getDependencyManagement();
-        if (dependencyManagement != null) {
-            updateDependencies(dependencyManagement.getDependencies(), projectContainer,
-                    ProjectContainer.XML_TAG_DEPENDENCY_MANAGEMENT);
-        }
+
+    }
+
+    @Override
+    public String toString() {
+        return "PomRefactorMojo{" +
+                "newGroupId='" + newGroupId + '\'' +
+                ", newArtifactId='" + newArtifactId + '\'' +
+                ", newVersion='" + newVersion + '\'' +
+                ", newType='" + newType + '\'' +
+                ", newScope='" + newScope + '\'' +
+                ", newClassifier='" + newClassifier + '\'' +
+                ", resolveVariables=" + resolveVariables +
+                ", newAttributes=" + newAttributes +
+                '}';
     }
 }

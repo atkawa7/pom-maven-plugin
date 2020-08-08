@@ -2,6 +2,7 @@ package io.github.atkawa7.pom;
 
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 
 import java.util.HashMap;
@@ -9,87 +10,35 @@ import java.util.Map;
 
 public abstract class AbstractPomModifyMojo extends AbstractPomMojo {
 
-    /**
-     * The groupId of the module to change version of.
-     *
-     * @parameter expression="${groupId}" default-value="${project.groupId}"
-     * @required
-     * @since 1.0.0
-     */
+    @Parameter(defaultValue = "${groupId}")
     private String groupId;
 
-    /**
-     * The artifactId of the module to change version of.
-     *
-     * @parameter expression="${artifactId}"
-     * @required
-     * @since 1.0.0
-     */
+    @Parameter(defaultValue = "${artifactId}")
     private String artifactId;
 
-    /**
-     * The old version to replace. The default value is <code>null</code> and
-     * only matches the current version of the according reactor project. Set to
-     * <code>"*"</code> in order to match any version.
-     *
-     * @parameter expression="${version}"
-     * @since 1.0.0
-     */
+    @Parameter(defaultValue = "${version}")
     private String version;
 
-    /**
-     * The type (e.g. "jar") to replace in dependencies. The default value is
-     * <code>null</code> and matches any type.
-     *
-     * @parameter expression="${type}"
-     * @since 1.0.0
-     */
+    @Parameter(defaultValue = "${type}")
     private String type;
 
-    /**
-     * The scope (e.g. "compile", "test", ...) to replace in dependencies. The
-     * default value is <code>null</code> and matches any scope.
-     *
-     * @parameter expression="${scope}"
-     * @since 1.0.0
-     */
+    @Parameter(defaultValue = "${scope}")
     private String scope;
 
-    /**
-     * The classifier (e.g. "sources") to replace in dependencies. The default
-     * value is <code>null</code> and matches any classifier.
-     *
-     * @parameter expression="${classifier}"
-     * @since 1.0.0
-     */
+    @Parameter(defaultValue = "${classifier}")
     private String classifier;
 
-    /**
-     * The encoding used to write pom.xml files.
-     *
-     * @parameter expression="${xmlEncoding}" default-value="${file.encoding}"
-     * @required
-     * @since 1.0.0
-     */
+
+    @Parameter(defaultValue = "${file.encoding}")
     private String xmlEncoding;
 
-    /**
-     * The flag to indicate if original pom.xml should be overwritten, or a new
-     * pom.xml should be created in <code>project.build.outputDirectory</code>.
-     *
-     * @parameter expression="${overwrite}" default-value="false"
-     * @required
-     * @since 1.0.0
-     */
+    @Parameter(defaultValue = "${overwrite}")
     private boolean overwrite;
 
     private DependencyPatternMatcher matcher;
 
     private final Map<ProjectId, ProjectContainer> projectContainerMap;
 
-    /**
-     * The constructor.
-     */
     public AbstractPomModifyMojo() {
 
         super();
@@ -146,6 +95,7 @@ public abstract class AbstractPomModifyMojo extends AbstractPomMojo {
         for (MavenProject module : this.reactorProjects) {
             ProjectId pid = new ProjectId(module);
             ProjectContainer container = this.projectContainerMap.get(pid);
+            getLog().warn("Executing project container");
             execute(container);
         }
         // pass 3: save modified POMs...
@@ -158,8 +108,20 @@ public abstract class AbstractPomModifyMojo extends AbstractPomMojo {
 
     protected void execute(ProjectContainer projectContainer) throws MojoExecutionException,
             MojoFailureException {
+        getLog().debug("Inside execute method ");
+        if(projectContainer==null){
+            getLog().debug("Project container is null ");
+        }else{
+            if(projectContainer.getId() !=null){
+                getLog().debug("Processing project " + projectContainer.getId() + "...");
+            }
+            else{
+                getLog().debug("Processing project null ...");
+            }
 
-        getLog().info("Processing project " + projectContainer.getId() + "...");
+        }
+
+
     }
 
 }
